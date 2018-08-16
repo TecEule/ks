@@ -29,8 +29,25 @@ import rf.RssFeedPanel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class ksGui extends JFrame {
+public class ksGui extends JFrame implements Runnable {
 
+	RssFeedPanel rssNtv;
+	RssFeedPanel rssWelt;
+	RssFeedPanel rssCnn;
+	RssFeedPanel rssKicker;
+	uzPanel uz;
+	waPanel weatherPanel;
+	vlPanel vl;
+
+	Thread threadWetter;
+	Thread threadRss;
+	Thread threadVerkehr;
+
+	private static String RssUrlNTv = "https://www.n-tv.de/rss";
+	private static String RssUrlWelt = "https://www.welt.de/feeds/topnews.rss";
+	private static String RssUrlCnn = "http://rss.cnn.com/rss/edition_world.rss";
+	private static String RssUrlKicker = "http://rss.kicker.de/news/aktuell";
+	
 	/**
 	 * Launch the application.
 	 */
@@ -100,7 +117,7 @@ public class ksGui extends JFrame {
 		int screenHeight = screenSize.height;
 		int screenWidth = screenSize.width;
 
-		uzPanel uz = new uzPanel();
+		uz = new uzPanel();
 		uz.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
@@ -115,7 +132,7 @@ public class ksGui extends JFrame {
 		uz.setBounds(screenWidth - offSet, 10, uz.getBreite(), uz.getHoehe());
 		getContentPane().add(uz);
 
-		waPanel weatherPanel = new waPanel();
+		weatherPanel = new waPanel();
 		weatherPanel.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
@@ -128,7 +145,7 @@ public class ksGui extends JFrame {
 		weatherPanel.setVisible(true);
 		getContentPane().add(weatherPanel);
 
-		vlPanel vl = new vlPanel();
+		vl = new vlPanel();
 		vl.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
@@ -142,11 +159,6 @@ public class ksGui extends JFrame {
 		offSet = vl.getWidth();
 		vl.setBounds(screenWidth - offSet, uz.getHeight(), 340, 500);
 		getContentPane().add(vl);
-
-		RssFeedPanel rssNtv;
-		RssFeedPanel rssWelt;
-		RssFeedPanel rssCnn;
-		RssFeedPanel rssKicker;
 
 		int rssHoehe = 280;
 
@@ -164,7 +176,7 @@ public class ksGui extends JFrame {
 		offSet = rssNtv.getHeight();
 		rssNtv.setBounds(10, screenHeight - offSet, 307, rssHoehe);
 		getContentPane().add(rssNtv);
-		rssNtv.initRss("https://www.n-tv.de/rss");
+		rssNtv.initRss(RssUrlNTv);
 
 		rssWelt = new RssFeedPanel();
 		rssWelt.addKeyListener(new KeyAdapter() {
@@ -179,7 +191,7 @@ public class ksGui extends JFrame {
 		rssWelt.setVisible(true);
 		rssWelt.setBounds(rssNtv.getWidth() + 10, screenHeight - rssWelt.getHeight(), 307, rssHoehe);
 		getContentPane().add(rssWelt);
-		rssWelt.initRss("https://www.welt.de/feeds/topnews.rss");
+		rssWelt.initRss(RssUrlWelt);
 
 		rssCnn = new RssFeedPanel();
 		rssCnn.addKeyListener(new KeyAdapter() {
@@ -195,7 +207,7 @@ public class ksGui extends JFrame {
 		rssCnn.setBounds((rssWelt.getWidth() + rssNtv.getWidth() + 10), screenHeight - rssWelt.getHeight(), 307,
 				rssHoehe);
 		getContentPane().add(rssCnn);
-		rssCnn.initRss("http://rss.cnn.com/rss/edition_world.rss");
+		rssCnn.initRss(RssUrlCnn);
 
 		rssKicker = new RssFeedPanel();
 		rssKicker.addKeyListener(new KeyAdapter() {
@@ -211,9 +223,74 @@ public class ksGui extends JFrame {
 		rssKicker.setBounds((rssCnn.getWidth() + rssWelt.getWidth() + rssNtv.getWidth() + 10),
 				screenHeight - rssKicker.getHeight(), 307, rssHoehe);
 		getContentPane().add(rssKicker);
-		rssKicker.initRss("http://rss.kicker.de/news/aktuell");
+		rssKicker.initRss(RssUrlKicker);
 
 		getContentPane().requestFocus();
+
+		
+		initThread();
+	}
+
+	private void initThread() {
+		
+		
+		threadWetter = new Thread(() -> {
+			while (true) {
+				try {
+					weatherPanel.initwaPanel();
+					System.out.println("Wetter");
+					Thread.sleep(600000); // 10 Minuten
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+
+		});
+		
+		threadWetter.start();
+		
+		threadVerkehr = new Thread(() ->  {
+			while(true)
+			{
+				try
+				{
+				vl.setBilder();
+				System.out.println("Verkehr");
+					Thread.sleep(600000);// (600000); // 10 Minuten
+				}catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
+		});
+		
+		threadVerkehr.start();
+		
+		threadRss = new Thread(() ->
+		{
+			while(true)
+			{
+				try
+				{
+					rssNtv.initRss(RssUrlNTv);
+					rssWelt.initRss(RssUrlWelt);
+					rssCnn.initRss(RssUrlCnn);
+					rssKicker.initRss(RssUrlKicker);
+					System.out.println("Rss");
+					Thread.sleep(600000); // 10 Minuten
+				}catch(InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		threadRss.start();
+	}
+
+	@Override
+	public void run() {
+		System.out.println("Run");
 
 	}
 }
